@@ -1,5 +1,6 @@
 package com.one_piece.thousand_sunny.controller;
 
+import com.one_piece.thousand_sunny.common.ApiResponse;
 import com.one_piece.thousand_sunny.model.User;
 import com.one_piece.thousand_sunny.model.Vehicle;
 import com.one_piece.thousand_sunny.service.AdminService;
@@ -29,46 +30,48 @@ public class AdminController {
 
     // Get all users
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAll());
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+        return ResponseEntity.ok(
+                new ApiResponse<>("success", "Users fetched successfully", userService.getAll())
+        );
     }
 
     // Delete user
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
 
         userService.delete(id);
-        return ResponseEntity.ok("User deleted by admin");
+        return ResponseEntity.ok(new ApiResponse<>("success", "User deleted by admin", null));
     }
 
-    // Assign role (no pattern validation here)
+    // Assign role
     @PutMapping("/users/{userId}/roles/{roleName}")
-    public ResponseEntity<User> assignRole(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId, @PathVariable String roleName) {
+    public ResponseEntity<ApiResponse<User>> assignRole(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId, @PathVariable String roleName) {
 
-        return ResponseEntity.ok(adminService.assignRole(userId, roleName));
+        return ResponseEntity.ok(new ApiResponse<>("success", "Role assigned successfully", adminService.assignRole(userId, roleName)));
     }
 
     // ================= VEHICLE ADMIN OPS =================
 
     // Get all vehicles
     @GetMapping("/vehicles")
-    public ResponseEntity<List<Vehicle>> getAllVehicles() {
+    public ResponseEntity<ApiResponse<List<Vehicle>>> getAllVehicles() {
 
-        return ResponseEntity.ok(vehicleService.getAll());
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched successfully", vehicleService.getAll()));
     }
 
     // Delete vehicle
     @DeleteMapping("/vehicles/{id}")
-    public ResponseEntity<String> deleteVehicle(@PathVariable @Min(value = 1, message = "VehicleId must be greater than 0") Long id) {
+    public ResponseEntity<ApiResponse<Object>> deleteVehicle(@PathVariable @Min(value = 1, message = "VehicleId must be greater than 0") Long id) {
 
         vehicleService.delete(id);
-        return ResponseEntity.ok("Vehicle deleted by admin");
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicle deleted by admin", null));
     }
 
     // Get vehicles by user
     @GetMapping("/vehicles/user/{userId}")
-    public ResponseEntity<List<Vehicle>> getVehiclesByUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId) {
+    public ResponseEntity<ApiResponse<List<Vehicle>>> getVehiclesByUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId) {
 
-        return ResponseEntity.ok(vehicleService.getVehiclesByUserId(userId));
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched for user", vehicleService.getVehiclesByUserId(userId)));
     }
 }

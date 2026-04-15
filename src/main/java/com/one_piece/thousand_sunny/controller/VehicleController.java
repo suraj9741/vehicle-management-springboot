@@ -1,5 +1,6 @@
 package com.one_piece.thousand_sunny.controller;
 
+import com.one_piece.thousand_sunny.common.ApiResponse;
 import com.one_piece.thousand_sunny.model.Vehicle;
 import com.one_piece.thousand_sunny.service.VehicleService;
 import jakarta.validation.Valid;
@@ -22,29 +23,30 @@ public class VehicleController {
 
     // Create vehicle
     @PostMapping
-    public ResponseEntity<Vehicle> createVehicle(@RequestBody @Valid Vehicle vehicle) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.register(vehicle));
+    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@RequestBody @Valid Vehicle vehicle) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("success", "Vehicle created successfully", vehicleService.register(vehicle)));
     }
 
     // Get vehicles by userId
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Vehicle>> getVehiclesByUserId(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId) {
+    public ResponseEntity<ApiResponse<List<Vehicle>>> getVehiclesByUserId(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId) {
 
-        return ResponseEntity.ok(vehicleService.getVehiclesByUserId(userId));
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched for user", vehicleService.getVehiclesByUserId(userId)));
     }
 
     // Get all vehicles
     @GetMapping
-    public ResponseEntity<List<Vehicle>> getAllVehicles() {
+    public ResponseEntity<ApiResponse<List<Vehicle>>> getAllVehicles() {
 
-        return ResponseEntity.ok(vehicleService.getAll());
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched successfully", vehicleService.getAll()));
     }
 
     // Delete vehicle
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVehicle(@PathVariable @Min(value = 1, message = "VehicleId must be greater than 0") Long id) {
+    public ResponseEntity<ApiResponse<Object>> deleteVehicle(@PathVariable @Min(value = 1, message = "VehicleId must be greater than 0") Long id) {
 
         vehicleService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicle deleted successfully", null));
     }
 }

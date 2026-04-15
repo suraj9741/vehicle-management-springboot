@@ -1,5 +1,6 @@
 package com.one_piece.thousand_sunny.controller;
 
+import com.one_piece.thousand_sunny.common.ApiResponse;
 import com.one_piece.thousand_sunny.model.User;
 import com.one_piece.thousand_sunny.service.UserService;
 import jakarta.validation.Valid;
@@ -22,37 +23,37 @@ public class UserController {
 
     // Create user (register)
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody @Valid User user) {
+    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody @Valid User user) {
         User savedUser = userService.register(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("success", "User created successfully", savedUser));
     }
 
     // Get user by ID (validated)
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
 
-        return ResponseEntity.ok(userService.getById(id));
+        return ResponseEntity.ok(new ApiResponse<>("success", "User fetched successfully", userService.getById(id)));
     }
 
     // Get all users
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
 
-        return ResponseEntity.ok(userService.getAll());
+        return ResponseEntity.ok(new ApiResponse<>("success", "Users fetched successfully", userService.getAll()));
     }
 
     // Update user (validated)
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id, @RequestBody @Valid User user) {
+    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id, @RequestBody @Valid User user) {
 
-        return ResponseEntity.ok(userService.update(id, user));
+        return ResponseEntity.ok(new ApiResponse<>("success", "User updated successfully", userService.update(id, user)));
     }
 
     // Delete user (validated)
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long id) {
 
         userService.delete(id);
-        return ResponseEntity.ok("User deleted successfully");
+        return ResponseEntity.ok(new ApiResponse<>("success", "User deleted successfully", null));
     }
 }
