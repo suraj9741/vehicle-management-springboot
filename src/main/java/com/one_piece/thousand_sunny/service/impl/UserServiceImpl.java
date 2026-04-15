@@ -69,4 +69,26 @@ public class UserServiceImpl implements UserService {
 
         userRepository.deleteById(id);
     }
+
+    @Override
+    public User update(Long id, User user) {
+
+        // Fetch existing user
+        UserEntity existingUser = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Update fields (only allowed fields)
+        existingUser.setName(user.getName());
+        existingUser.setEmail(user.getEmail());
+
+        // Optional: update password if provided
+        if (user.getPassword() != null && !user.getPassword().isBlank()) {
+            existingUser.setPassword(user.getPassword());
+        }
+
+        // Save updated entity
+        existingUser = userRepository.save(existingUser);
+
+        // Convert back to model
+        return userConverter.convertEntityToModel(existingUser);
+    }
 }
