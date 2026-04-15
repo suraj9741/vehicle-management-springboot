@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: thousand-sunny
+
+  profiles:
+    active: dev
+
+  security:
+    user:
+      name: user
+      password: user
