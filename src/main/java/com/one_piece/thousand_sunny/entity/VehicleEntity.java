@@ -20,9 +20,10 @@ public class VehicleEntity {
     @Column(nullable = false, unique = true)
     private String vehicleNumber;
 
+    @Column(nullable = false)
     private String status;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 }
