@@ -8,6 +8,7 @@ import com.one_piece.thousand_sunny.repository.RoleRepository;
 import com.one_piece.thousand_sunny.repository.UserRepository;
 import com.one_piece.thousand_sunny.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -26,11 +27,17 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserConverter userConverter;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public User register(User user) {
 
         // Convert model → entity
         UserEntity userEntity = userConverter.convertModelToEntity(user);
+
+        // Encode password
+        userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
 
         // Assign default role (USER)
         RoleEntity role = roleRepository.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Default role USER not found"));
@@ -80,9 +87,9 @@ public class UserServiceImpl implements UserService {
         existingUser.setName(user.getName());
         existingUser.setEmail(user.getEmail());
 
-        // Optional: update password if provided
+        // Encode password only if updating
         if (user.getPassword() != null && !user.getPassword().isBlank()) {
-            existingUser.setPassword(user.getPassword());
+            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
         // Save updated entity

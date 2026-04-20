@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class VehicleController {
 
     // Create vehicle
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','USER','CREATOR')")
     public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@RequestBody @Valid Vehicle vehicle) {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("success", "Vehicle created successfully", vehicleService.register(vehicle)));
@@ -30,20 +32,15 @@ public class VehicleController {
 
     // Get vehicles by userId
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or (isAuthenticated() and #userId == principal.id)")
     public ResponseEntity<ApiResponse<List<Vehicle>>> getVehiclesByUserId(@PathVariable @Min(value = 1, message = "UserId must be greater than 0") Long userId) {
 
         return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched for user", vehicleService.getVehiclesByUserId(userId)));
     }
 
-    // Get all vehicles
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<Vehicle>>> getAllVehicles() {
-
-        return ResponseEntity.ok(new ApiResponse<>("success", "Vehicles fetched successfully", vehicleService.getAll()));
-    }
-
     // Delete vehicle
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','CREATOR')")
     public ResponseEntity<ApiResponse<Object>> deleteVehicle(@PathVariable @Min(value = 1, message = "VehicleId must be greater than 0") Long id) {
 
         vehicleService.delete(id);
