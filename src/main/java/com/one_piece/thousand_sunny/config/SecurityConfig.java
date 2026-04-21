@@ -35,6 +35,7 @@ public class SecurityConfig {
 
                         // Public APIs
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/kafka/**").permitAll()
 
                         // Role-based APIs (FIXED PATHS)
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

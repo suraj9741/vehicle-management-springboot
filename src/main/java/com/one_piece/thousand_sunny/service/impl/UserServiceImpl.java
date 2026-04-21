@@ -7,7 +7,8 @@ import com.one_piece.thousand_sunny.model.User;
 import com.one_piece.thousand_sunny.repository.RoleRepository;
 import com.one_piece.thousand_sunny.repository.UserRepository;
 import com.one_piece.thousand_sunny.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,43 +19,61 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserConverter userConverter;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserConverter userConverter;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserServiceImpl(UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           UserConverter userConverter,
+                           PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.userConverter = userConverter;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public User register(User user) {
 
+        log.info("Registering new user with email: {}", user.getEmail());
+
         // Convert model → entity
         UserEntity userEntity = userConverter.convertModelToEntity(user);
 
-        // Encode password
+        // Encode password (NEVER log password)
         userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Assign default role (USER)
-        RoleEntity role = roleRepository.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Default role USER not found"));
+        // Assign default role
+        RoleEntity role = roleRepository.findByRoleName("USER")
+                .orElseThrow(() -> {
+                    log.error("Default role USER not found");
+                    return new RuntimeException("Default role USER not found");
+                });
 
         userEntity.setRoles(Collections.singleton(role));
 
         // Save user
         userEntity = userRepository.save(userEntity);
 
-        // Convert back → model
+        log.info("User registered successfully with id: {}", userEntity.getId());
+
         return userConverter.convertEntityToModel(userEntity);
     }
 
     @Override
     public User getById(Long id) {
 
-        UserEntity userEntity = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        log.debug("Fetching user with id: {}", id);
+
+        UserEntity userEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found with id: {}", id);
+                    return new RuntimeException("User not found with id: " + id);
+                });
 
         return userConverter.convertEntityToModel(userEntity);
     }
@@ -62,40 +81,56 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAll() {
 
+        log.debug("Fetching all users");
+
         List<UserEntity> users = userRepository.findAll();
 
-        return users.stream().map(userConverter::convertEntityToModel).collect(Collectors.toList());
+        log.info("Total users fetched: {}", users.size());
+
+        return users.stream()
+                .map(userConverter::convertEntityToModel)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void delete(Long id) {
 
+        log.info("Deleting user with id: {}", id);
+
         if (!userRepository.existsById(id)) {
+            log.warn("Attempt to delete non-existing user with id: {}", id);
             throw new RuntimeException("User not found with id: " + id);
         }
 
         userRepository.deleteById(id);
+
+        log.info("User deleted successfully with id: {}", id);
     }
 
     @Override
     public User update(Long id, User user) {
 
-        // Fetch existing user
-        UserEntity existingUser = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        log.info("Updating user with id: {}", id);
 
-        // Update fields (only allowed fields)
+        UserEntity existingUser = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found for update with id: {}", id);
+                    return new RuntimeException("User not found with id: " + id);
+                });
+
+        // Update allowed fields
         existingUser.setName(user.getName());
         existingUser.setEmail(user.getEmail());
 
-        // Encode password only if updating
         if (user.getPassword() != null && !user.getPassword().isBlank()) {
             existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+            log.debug("Password updated for user id: {}", id);
         }
 
-        // Save updated entity
         existingUser = userRepository.save(existingUser);
 
-        // Convert back to model
+        log.info("User updated successfully with id: {}", id);
+
         return userConverter.convertEntityToModel(existingUser);
     }
 }
