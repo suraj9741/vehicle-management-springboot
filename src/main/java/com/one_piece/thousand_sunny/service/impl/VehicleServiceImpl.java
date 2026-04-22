@@ -9,6 +9,8 @@ import com.one_piece.thousand_sunny.repository.VehicleRepository;
 import com.one_piece.thousand_sunny.service.VehicleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,6 +34,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @CacheEvict(value = {"vehicles", "vehiclesByUser"}, allEntries = true)
     public Vehicle register(Vehicle vehicle) {
 
         log.info("Registering vehicle with number: {}", vehicle.getVehicleNumber());
@@ -54,18 +57,20 @@ public class VehicleServiceImpl implements VehicleService {
         vehicleEntity = vehicleRepository.save(vehicleEntity);
 
         log.info("Vehicle registered successfully with id: {}", vehicleEntity.getId());
+        log.info("CACHE EVICT → Clearing vehicle caches after register");
 
         return vehicleConverter.convertEntityToModel(vehicleEntity);
     }
 
     @Override
+    @Cacheable(value = "vehiclesByUser", key = "#userId")
     public List<Vehicle> getVehiclesByUserId(Long userId) {
 
-        log.debug("Fetching vehicles for userId: {}", userId);
+        log.debug("CACHE MISS → Fetching vehicles from DB for userId: {}", userId);
 
         List<VehicleEntity> vehicleEntities = vehicleRepository.findByUserId(userId);
 
-        log.info("Total vehicles found for userId {}: {}", userId, vehicleEntities.size());
+        log.info("DB RESULT → Total vehicles found for userId {}: {}", userId, vehicleEntities.size());
 
         return vehicleEntities.stream()
                 .map(vehicleConverter::convertEntityToModel)
@@ -73,13 +78,14 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Cacheable(value = "vehicles", key = "'all'")
     public List<Vehicle> getAll() {
 
-        log.debug("Fetching all vehicles");
+        log.debug("CACHE MISS → Fetching all vehicles from DB");
 
         List<VehicleEntity> vehicleEntities = vehicleRepository.findAll();
 
-        log.info("Total vehicles fetched: {}", vehicleEntities.size());
+        log.info("DB RESULT → Total vehicles fetched: {}", vehicleEntities.size());
 
         return vehicleEntities.stream()
                 .map(vehicleConverter::convertEntityToModel)
@@ -87,6 +93,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @CacheEvict(value = {"vehicles", "vehiclesByUser"}, allEntries = true)
     public Vehicle delete(Long id) {
 
         log.info("Deleting vehicle with id: {}", id);
@@ -100,6 +107,7 @@ public class VehicleServiceImpl implements VehicleService {
         vehicleRepository.delete(vehicleEntity);
 
         log.info("Vehicle deleted successfully with id: {}", id);
+        log.info("CACHE EVICT → Clearing vehicle caches after delete");
 
         return vehicleConverter.convertEntityToModel(vehicleEntity);
     }

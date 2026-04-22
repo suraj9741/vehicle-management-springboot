@@ -9,6 +9,8 @@ import com.one_piece.thousand_sunny.repository.UserRepository;
 import com.one_piece.thousand_sunny.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", allEntries = true)
     public User register(User user) {
 
         log.info("Registering new user with email: {}", user.getEmail());
@@ -60,14 +63,16 @@ public class UserServiceImpl implements UserService {
         userEntity = userRepository.save(userEntity);
 
         log.info("User registered successfully with id: {}", userEntity.getId());
+        log.info("CACHE EVICT → Clearing user cache after register");
 
         return userConverter.convertEntityToModel(userEntity);
     }
 
     @Override
+    @Cacheable(value = "users", key = "#id")
     public User getById(Long id) {
 
-        log.debug("Fetching user with id: {}", id);
+        log.debug("CACHE MISS → Fetching user from DB with id: {}", id);
 
         UserEntity userEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
@@ -79,13 +84,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "'all'")
     public List<User> getAll() {
 
-        log.debug("Fetching all users");
+        log.debug("CACHE MISS → Fetching all users from DB");
 
         List<UserEntity> users = userRepository.findAll();
 
-        log.info("Total users fetched: {}", users.size());
+        log.info("DB RESULT → Total users fetched: {}", users.size());
 
         return users.stream()
                 .map(userConverter::convertEntityToModel)
@@ -93,6 +99,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", allEntries = true)
     public void delete(Long id) {
 
         log.info("Deleting user with id: {}", id);
@@ -105,9 +112,11 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
 
         log.info("User deleted successfully with id: {}", id);
+        log.info("CACHE EVICT → Clearing user cache after delete");
     }
 
     @Override
+    @CacheEvict(value = "users", allEntries = true)
     public User update(Long id, User user) {
 
         log.info("Updating user with id: {}", id);
@@ -130,6 +139,7 @@ public class UserServiceImpl implements UserService {
         existingUser = userRepository.save(existingUser);
 
         log.info("User updated successfully with id: {}", id);
+        log.info("CACHE EVICT → Clearing user cache after update");
 
         return userConverter.convertEntityToModel(existingUser);
     }
